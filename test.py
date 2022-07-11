@@ -26,6 +26,37 @@ class QR:
     def __getitem__(self, key):
         print(key, type(key))
 
+    def __setitem__(self, key, value):
+        print(key, value)
+
 
 qr = QR()
-qr[1, 2, 3]
+qr[1]
+qr[1, 3]
+qr[1:3]
+qr[1, 2:5, 3]
+qr[:1, 2:5, 3:, 3:7:2]
+
+# qr[1:3, 's'] = 17
+
+class Dimensions:
+    def __init__(self, pixels_per_square):
+        self.pixels_per_square = pixels_per_square
+        self.squares = 24
+        self.small_circle_radius = 2
+        self.big_circle_radius = 2
+        self.center = self.squares / 2
+        self.data_size = self.squares - 2*3
+
+        self._convertible_keys = {
+            'squares', 'small_circle_radius', 'big_circle_radius', 'center'}
+
+    def __getattr__(self, key):
+        if key.endswith('_px') and key[:-3] in self._convertible_keys:
+            key = key[:-3]
+            return getattr(self, key) * self.pixels_per_square
+        else:
+            return getattr(self, key)
+
+dimensions = Dimensions(40)
+print(dimensions.center_px)

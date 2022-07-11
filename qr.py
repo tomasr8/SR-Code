@@ -3,45 +3,23 @@ import numpy as np
 import cv2
 
 from homography import solve_homography
+from util import decode_data
+
+WHITE = 255
+BLACK = 0
+
+def has_color(selection, color, threshold=0.6):
+    total_area = np.prod(selection.shape)
+    color_area = np.sum(selection == color)
+    return (color_area/total_area) > threshold
 
 
 def is_black(selection, threshold=0.6):
-    total_area = 1
-    for dim in selection.shape:
-        total_area *= dim
-
-    black_area = np.sum(selection == 0)
-
-    # print("ratio", black_area/total_area)
-
-    if (black_area/total_area) > threshold:
-        return True
-    else:
-        return False
+    return has_color(selection, BLACK, threshold)
 
 
 def is_white(selection, threshold=0.6):
-    total_area = 1
-    for dim in selection.shape:
-        total_area *= dim
-
-    white_area = np.sum(selection == 255)
-
-    # print("ratio", white_area/total_area)
-
-    if (white_area/total_area) > threshold:
-        return True
-    else:
-        return False
-
-
-def create_circular_mask(x, y, r, w, h):
-    Y, X = np.ogrid[:h, :w]
-
-    dist_from_center = np.sqrt((X - x)**2 + (Y - y)**2)
-
-    mask = dist_from_center <= r
-    return mask
+    return has_color(selection, WHITE, threshold)
 
 
 def is_main_square(image, draw, box):
@@ -254,30 +232,6 @@ def read_data(image, draw, size):
     decoded = decode_data(data)
     print(decoded)
     return decoded
-
-
-def decode_data(data):
-    n = len(data)//3
-
-    data = np.reshape(data, (3, n))
-
-    data = np.sum(data, axis=0)
-
-    data[data <= 1] = 0
-    data[data >= 2] = 1
-
-    n = len(data)//6
-    data = np.reshape(data, (n, 6))
-
-    BASE64 = " !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-    data = [binary_array_to_num(arr) for arr in data]
-    data = [BASE64[i] for i in data]
-    return "".join(data)
-
-
-def binary_array_to_num(arr):
-    return int("".join(str(x) for x in arr), 2)
 
 
 def read_qr(path):

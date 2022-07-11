@@ -13,7 +13,7 @@ def encode_string(message):
     for letter in message:
         index = CHARACTERS.find(letter)
         binary = f"{index:06b}"
-        encoded += list(binary)
+        encoded += list(map(int, binary))
 
     # Redundancy!
     return encoded + encoded + encoded
