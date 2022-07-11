@@ -445,4 +445,4 @@ def read_qr_video(image):
 
 
 if __name__ == '__main__':
-    read_qr("qr5_slanted2.jpg")
+    read_qr("data/qr5.jpg")

@@ -1,5 +1,30 @@
 import math
 import numpy as np
+import cv2
+
+def estimate_homography(image_points, world_points, method=cv2.RANSAC):
+    """Estimate homography from image-world correspondences.
+
+    Args:
+        image_points: Nx2 numpy array of image points.
+        world_points: Nx2 numpy array of world points.
+
+    Returns:
+        The normalized homography matrix.
+    """
+
+    # method=0 uses least-squares
+    # other methods are:
+    #   - RANSAC (use method=cv2.RANSAC)
+    #   - Least-Median (method=cv2.LMEDS)
+    #   - PROSAC-based method (method=cv2.RHO)
+    #
+    # See docs: https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
+    #
+    H, _ = cv2.findHomography(image_points, world_points, method=method)
+
+    return H
+
 
 
 def solve_homography(A, B):

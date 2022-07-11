@@ -21,3 +21,11 @@ import platform
 import socket
 print(platform.processor())
 print(socket.getfqdn())
+
+class QR:
+    def __getitem__(self, key):
+        print(key, type(key))
+
+
+qr = QR()
+qr[1, 2, 3]

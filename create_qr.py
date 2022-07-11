@@ -17,11 +17,11 @@ BIG_CIRCLE_RADIUS = 2 * PX
 SMALL_CIRCLE_RADIUS = 1 * PX
 
 
-def create_circular_mask(x, y, r, w, h):
+def create_circular_mask(r, w, h):
+    x = w/2
+    y = h/2
     Y, X = np.ogrid[:h, :w]
-
     dist_from_center = np.sqrt((X - x)**2 + (Y - y)**2)
-
     mask = dist_from_center <= r
     return mask
 
@@ -29,10 +29,8 @@ def create_circular_mask(x, y, r, w, h):
 def draw_square(image, i, j):
     x = i*PX
     y = j*PX
-
     xp = (i+1)*PX
     yp = (j+1)*PX
-
     image[y:yp, x:xp] = 0
 
 
@@ -54,10 +52,10 @@ def draw_end_corner(image):
 
 
 def draw_circles(image):
-    big_circle_mask = create_circular_mask(CENTER, CENTER, BIG_CIRCLE_RADIUS, TOTAL_SIZE, TOTAL_SIZE)
+    big_circle_mask = create_circular_mask(BIG_CIRCLE_RADIUS, TOTAL_SIZE, TOTAL_SIZE)
     image[big_circle_mask] = 0
 
-    small_circle_mask = create_circular_mask(CENTER, CENTER, SMALL_CIRCLE_RADIUS, TOTAL_SIZE, TOTAL_SIZE)
+    small_circle_mask = create_circular_mask(SMALL_CIRCLE_RADIUS, TOTAL_SIZE, TOTAL_SIZE)
     image[small_circle_mask] = 255
 
 
