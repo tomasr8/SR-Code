@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
-import click
 
 from qr.util import encode_string
 from qr.lib import QrCodeDimensions, WHITE, BLACK
 from qr.image import QrCodeImage
+
 
 class QrCodeGenerator:
     def __init__(self, dims: QrCodeDimensions):
@@ -29,7 +29,6 @@ class QrCodeGenerator:
         # self.draw_square(2, 2)
         # self.draw_square(3, 2)
         # self.draw_square(2, 3)
-
 
     def draw_directional_corner(self):
         # |█| |
@@ -74,16 +73,3 @@ def generate_qr(message, size):
             qr.image[y, x] = BLACK
 
     return cv2.cvtColor(qr.image._image, cv2.COLOR_GRAY2RGB)
-
-
-@click.command()
-@click.option("--size", "-s", type=int, default=25, help="Size of one square in pixels")
-@click.option("--message", "-m", type=str, required=True, help="The message to encode")
-@click.argument("output_file")
-def generate(size, message, output_file):
-    image = generate_qr(message, size)
-    cv2.imwrite(output_file, image)    
-
-
-if __name__ == '__main__':
-    generate()
