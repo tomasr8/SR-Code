@@ -1,9 +1,19 @@
+from enum import Enum
+
 WHITE = 255
 BLACK = 0
 
+
+class Corner(Enum):
+    TOP_LEFT = 1
+    BOTTOM_LEFT = 2
+    TOP_RIGHT = 3
+    BOTTOM_RIGHT = 4
+
+
 class QrCodeDimensions:
     """Stores the dimensions of all the parts of the QR code
-    
+
     Can convert between squares and pixels
     """
 
@@ -12,7 +22,7 @@ class QrCodeDimensions:
         self.squares = 24
         self.small_circle_radius = 1
         self.big_circle_radius = 2
-        self.center = self.squares / 2
+        self.center = self.squares // 2
         self.reserved_outer_border = 3
         self.reserved_inner_radius = self.big_circle_radius + 1
 
@@ -43,11 +53,11 @@ class QrCodeDimensions:
 
     @property
     def corners(self):
-        corners = {
-            'top_left': [[2, 2], [3, 2], [2, 3]],
-            'bottom_left': [[-4, 2], [-3, 2], [-3, 3]],
-            'top_right': [[1,-4], [1,-5], [2, -4]],
-            'bottom_right': [[-4,-4], [-4, -5], [-5, -4]],
+        return {
+            Corner.TOP_LEFT: [[2, 2], [3, 2], [2, 3]],
+            Corner.BOTTOM_LEFT: [[-3, 2], [-4, 2], [-3, 3]],
+            Corner.TOP_RIGHT: [[2, -3], [2, -4], [3, -3]],
+            Corner.BOTTOM_RIGHT: [[-3, -3], [-4, -3], [-3, -4]],
         }
 
     def _is_reserved(self, x, y):
