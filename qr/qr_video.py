@@ -1,43 +1,39 @@
 import time
 import cv2
-import numpy as np
-from qr import read_qr_video
+from qr.read_qr import read_qr
 
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
-cap = cv2.VideoCapture('qr5_video.mp4')
+cap = cv2.VideoCapture('annina.mp4')
+# cap = cv2.VideoCapture(0)
+
+
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)  # set new dimensionns to cam object (not cap)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # Check if camera opened successfully
-if (cap.isOpened()== False): 
-  print("Error opening video stream or file")
+if not cap.isOpened():
+    print("Error opening video stream or file")
 
 # Read until video is completed
-while(cap.isOpened()):
-  # Capture frame-by-frame
-  ret, frame = cap.read()
-  if ret == True:
+while (cap.isOpened()):
+    ret, frame = cap.read()
+    if ret:
 
-    print("shape", frame.shape)
-    # frame = cv2.resize(frame, (1920, 960), interpolation=cv2.INTER_AREA)
+        start = time.time()
+        res = read_qr(frame)
+        if res.qr_code_visualization is not None:
+            vis = cv2.resize(res.qr_code_visualization, (300, 300))
+            res.contour_visualization[:300, :300] = vis
+        # frame[:300, :300] = vis
 
-    # Display the resulting frame
-    start = time.time()
-    frame = read_qr_video(frame)
-    frame = cv2.resize(frame, (960, 480), interpolation=cv2.INTER_AREA)
-    cv2.imshow('Frame', frame)
-    print("time", (time.time() - start))
+        cv2.imshow('Frame', res.contour_visualization)
 
-    # Press Q on keyboard to  exit
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-      break
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
 
-  # Break the loop
-  else: 
-    break
+    else:
+        break
 
-# When everything done, release the video capture object
 cap.release()
-
-# Closes all the frames
 cv2.destroyAllWindows()
-
