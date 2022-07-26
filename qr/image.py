@@ -3,15 +3,16 @@ from collections import namedtuple
 import cv2
 import numpy as np
 
-from qr.lib import BLACK, WHITE
-
+WHITE = 255
+BLACK = 0
 ORANGE = (0, 140, 240)
-TEXT_COLOR = (155, 0, 255)
+GREEN = (0, 255, 0)
+PURPLE = (155, 0, 255)
 
 Contour = namedtuple("Contour", ["shape", "area"])
 
 
-def find_contours(image, min_area=1e4, epsilon=0.05):
+def find_contours(image, min_area=1e5, epsilon=0.05):
     contours, _ = cv2.findContours(image.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = [simplify_contour(c, epsilon) for c in contours]
     contours = [c for c in contours if (
@@ -31,30 +32,17 @@ def simplify_contour(contour, epsilon):
 
 def make_black_and_white(image):
     grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Anything that is in this range is considered black
-    return ~cv2.inRange(grayscale, 0, 150)
-
-
-def warp_image(image, contour, dims):
-    px = dims.pixels_per_square
-    size = dims.squares_px
-    inner_size = size-2*px
-
-    pixel_coordinates = np.float64([
-        [0, 0],
-        [0, inner_size],
-        [inner_size, inner_size],
-        [inner_size, 0]
-    ])
-
-    H, _ = cv2.findHomography(contour, pixel_coordinates)
-    image = cv2.warpPerspective(image, H, (inner_size, inner_size), flags=cv2.INTER_LINEAR)
+    # Removes noise, which improves thresholding
     # https://pyimagesearch.com/2021/04/28/opencv-smoothing-and-blurring/
-    image = cv2.medianBlur(image, 3)
+    grayscale = cv2.medianBlur(grayscale, 3)
+    # https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+    _, threshold = cv2.threshold(grayscale, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return threshold
 
-    image_with_border = np.zeros((size, size), dtype=np.uint8)
-    image_with_border[px:size-px, px:size-px] = image
-    return image_with_border
+
+def warp_image(image, source, target, size):
+    H, _ = cv2.findHomography(source, target)
+    return cv2.warpPerspective(image, H, (size, size), flags=cv2.INTER_LINEAR)
 
 
 def create_circular_mask(radius, size):

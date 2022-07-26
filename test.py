@@ -1,10 +1,4 @@
-class Test:
+import numpy as np
 
-    def __getattr__(self, key):
-        print(key)
+np.full((20, 20), int(255), dtype=np.uint8)
 
-
-t = Test()
-
-
-t.a.b

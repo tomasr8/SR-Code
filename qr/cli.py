@@ -1,8 +1,8 @@
 import click
 import cv2
 
-from qr.generate_qr import QrCodeGenerator
-from qr.read_qr import read_qr
+from qr.code import SRCodeGenerator
+from qr.decode import decode, decode_video
 
 
 @click.group()
@@ -15,7 +15,7 @@ def cli():
 @click.option("--message", "-m", type=str, required=True, help="The message to encode")
 @click.argument("output_file")
 def generate(size, message, output_file):
-    qr = QrCodeGenerator(pixels_per_square=size)
+    qr = SRCodeGenerator(pixels_per_square=size)
 
     if error := qr.validate_message(message):
         click.secho(error, fg='red')
@@ -29,4 +29,26 @@ def generate(size, message, output_file):
 @click.argument("input_file")
 def read(input_file):
     image = cv2.imread(input_file)
-    read_qr(image)
+    result = decode(image)
+    print(result)
+
+    cv2.imshow('Frame', result.bw_visualization)
+    while True:
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
+
+    cv2.imshow('Frame', result.contour_visualization)
+    while True:
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
+
+    cv2.imshow('Frame', result.decode_visualization)
+    while True:
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
+
+
+@cli.command()
+@click.argument("input_file")
+def video(input_file):
+    decode_video(0)
