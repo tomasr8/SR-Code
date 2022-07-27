@@ -9,7 +9,7 @@ ORANGE = (0, 140, 240)
 GREEN = (0, 255, 0)
 PURPLE = (155, 0, 255)
 
-Contour = namedtuple("Contour", ["shape", "area"])
+Contour = namedtuple("Contour", ["points", "area"])
 
 
 def find_contours(image, min_area=1e5, epsilon=0.05):
@@ -21,7 +21,7 @@ def find_contours(image, min_area=1e5, epsilon=0.05):
     )]
     contours = [Contour(c[:, 0, :], cv2.contourArea(c)) for c in contours]
     # The simplified contour must have 4 vertices
-    contours = [c for c in contours if c.shape.shape[0] == 4]
+    contours = [c for c in contours if c.points.shape[0] == 4]
     return contours
 
 
@@ -74,7 +74,7 @@ def resize_with_aspect_ratio(image, width):
     return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
 
-def draw_text(image, text, pos, color, font_size=1, thickness=1):
+def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=2):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(
         image,
@@ -87,6 +87,16 @@ def draw_text(image, text, pos, color, font_size=1, thickness=1):
     )
 
 
-def draw_contours(image, contours, color, thickness):
+def draw_contours(image, contours, color=ORANGE, thickness=15):
     for contour in contours:
         cv2.polylines(image, [contour], True, color, thickness)
+
+
+def horizontal_concat(left, right):
+    h = max(left.shape[0], right.shape[0])
+    w = left.shape[1] + right.shape[1]
+    image = np.zeros((h, w, 3), dtype=np.uint8)
+    image[:left.shape[0], :left.shape[1]] = left
+    image[:right.shape[0], left.shape[1]:] = right
+    return image
+
