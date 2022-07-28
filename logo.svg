@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg width="150" height="185" style="background-color: white;" xmlns="http://www.w3.org/2000/svg">
   <style>
-        @font-face { 
+        @font-face {
           font-family: "VT323";
           font-style: normal;
           font-weight: 400;
@@ -66,4 +66,3 @@
     </g>
   </svg>
 </svg>
-  

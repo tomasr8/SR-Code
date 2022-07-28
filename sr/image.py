@@ -100,3 +100,6 @@ def horizontal_concat(left, right):
     image[:right.shape[0], left.shape[1]:] = right
     return image
 
+
+def pressed_quit(timeout_ms=0):
+    return cv2.waitKey(timeout_ms) & 0xFF == ord('q')

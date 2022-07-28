@@ -6,7 +6,7 @@
 
 ## But why?
 
-I was taking a course about computer vision when I got the idea to design my own simplified QR code just to see if I could. I also didn't want to create yet another QR code reader but rather create something of my own. SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (atleast that's what wikipedia tells me). Also a disclaimer, I haven't really looked into how a standard QR code works. This project is only trying to visually imitate a QR code, not neccessarily use the same algorithms.
+I was taking a course about computer vision when I got the idea to design my own simplified QR code. I didn't want to create yet another QR code reader but rather create something of my own. SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (atleast that's what wikipedia tells me). Also a disclaimer, I haven't really looked deep into how a standard QR code works. This project is trying to only visually imitate a QR code, not neccessarily use the same algorithms.
 
 ## Examples
 
@@ -15,7 +15,7 @@ I was taking a course about computer vision when I got the idea to design my own
 Clone the repo, create a virtual environment and install as a dev package:
 
 ```bash
-git clone https://github.com/tomasr8/SR-Code.git
+git clone --depth=1 https://github.com/tomasr8/SR-Code.git
 cd SR-Code
 
 python -m venv .venv
@@ -25,12 +25,17 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-Run:
+To use it:
 
 ```bash
+# Create a 600x600 SR code which encodes 'Hello world!'
 sr generate -s 600 -m 'Hello world!' hello.png
+# Decode an SR code from an image
 sr decode hello.png
+# Decode from a video
 sr video video.mp4
+# Alternatively use the system camera
+sr video
 ```
 
 For help:
@@ -39,15 +44,16 @@ For help:
 sr --help
 ```
 
-## How does this actually work?
+## How does it actually work?
+if you wanna see a detailed explantaion, skip to [Design](#Design).
 
-if you wanna see a detailed explantaion, skip to #design
+![](sr-diagram.png)
 
 Let's assume we start with a standard color image that includes the QR code somewhere inside of it. Before we do any decoding we must first locate it.
 
 - image
 
-To do this I use openCV to find contours in the image. A contour is a closed shape which separates two regions. For this to work the image has to be converted to black & white:
+To do this I use OpenCV to find contours in the image. A contour is a closed shape which separates two regions. For this to work the image has to be converted to black & white:
 
 - image
 
@@ -68,7 +74,7 @@ Finally, we read the data. A black square encodes the bit 1 and white encodes 0.
 - image
 
 - First, we convert the image into a binary black & white image using Otsu's method
-- Next, we use openCV's function to find candidate contours which are processed to select likely candidates.
+- Next, we use OpenCV's function to find candidate contours which are processed to select likely candidates.
 - Each contour is mapped using a homography to remove any distortions
 - To make sure we actually have a qr code on our hands, we check for the presents of the circles at the center. There are a lot of rectangular objects in the wild, so this helps firlter out unlikely candidates.
 - Next, we look for the starting corner so that we know where to start reading from.
@@ -90,3 +96,11 @@ This encoding scheme is pretty inefficient and it's possible to use more advance
 Once we have the start corner, we rotate the qr code so that the start corner is in the top left. Then, we just read the data column by column, skipping the middle part reserved for the circles.
 
 Why the rings? It's a pretty specific shape which is unlikely to appear randomly unless we're dealing with an actual qr code. It's also symmetrical so we can check for it regardless of the orientation the code.
+
+## Limitations
+
+
+
+- Maximum 16 characters from this character set:
+
+This is the result of the encoding scheme/ I had 288 bits to work with which leaves 288/3=96 bits for the message. Using base64, I can encode one character in 6 bits, thus 96/6=16 total characters.

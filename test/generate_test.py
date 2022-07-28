@@ -3,7 +3,7 @@ from pathlib import Path
 import cv2
 import pytest
 
-from qr.code import EncodeError, SRCodeGenerator
+from sr.code import EncodeError, SRCodeGenerator
 
 
 def _encode_image(image):
@@ -26,7 +26,3 @@ def test_generate(snapshot):
 
     with pytest.raises(EncodeError):
         sr.generate("This message is too long")
-
-
-def test_decode():
-    pass

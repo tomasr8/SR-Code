@@ -19,14 +19,14 @@ def encode_message(message):
 
 
 def decode_data(data):
-    data = np.reshape(data, (3, len(data)//3))
+    data = np.reshape(data, (3, len(data) // 3))
     data = np.sum(data, axis=0)
     # Majority vote
     data[data <= 1] = 0
     data[data >= 2] = 1
 
     # We needed 6 bytes to encode values between 0 and 64
-    message_length = len(data)//6
+    message_length = len(data) // 6
     data = np.reshape(data, (message_length, 6))
     data = map(binary_array_to_integer, data)
     return "".join([CHARACTERS[n] for n in data])

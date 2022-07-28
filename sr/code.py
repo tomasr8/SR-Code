@@ -8,9 +8,9 @@ import click
 import cv2
 import numpy as np
 
-from qr.image import (BLACK, GREEN, ORANGE, WHITE, create_circular_mask,
+from sr.image import (BLACK, GREEN, ORANGE, WHITE, create_circular_mask,
                       draw_text, is_black, is_white, warp_image)
-from qr.message import (CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE,
+from sr.message import (CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE,
                         decode_data, encode_message)
 
 
@@ -74,6 +74,7 @@ class DecodeResult:
                 f"- Contours found: {contours}\n" +
                 f"{errors}"
             )
+
 
 class SRCode:
     """Base SR code class.
@@ -167,6 +168,7 @@ class SRCode:
             Corner.BOTTOM_LEFT: [[-3, 3], [-3, 2], [-4, 2]],
         }
 
+
 class SRCodeGenerator(SRCode):
     def _draw_start_corner(self):
         # |█|█|
@@ -215,7 +217,7 @@ class SRCodeGenerator(SRCode):
             raise EncodeError(f"Message too long ({len(message)}), maximum is {self.max_message_length}")
 
         if not all(letter in CHARACTERS for letter in message):
-            raise EncodeError("Invalid characters in the message\nAllowed characters: {CHARACTERS}")
+            raise EncodeError(f"Invalid characters in the message, allowed characters: {CHARACTERS}")
 
 
 class SRCodeReader(SRCode):
