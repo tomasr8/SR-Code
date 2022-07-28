@@ -45,27 +45,30 @@ sr --help
 ```
 
 ## How does it actually work?
-if you wanna see a detailed explantaion, skip to [Design](#Design).
+if you wanna see a detailed explanation, skip to [Design](#design).
 
 ![](sr-diagram.png)
 
-Let's assume we start with a standard color image that includes the QR code somewhere inside of it. Before we do any decoding we must first locate it.
+This is a diagram showing all the main parts of the SR code. We'll explain them in the following section. (By the way, even with the extra colored lines, this will still decode correctly. Try running `sr decode sr-diagram.png` to see for yourself)
+
+Let's assume we start with a standard RGB image that includes the code somewhere inside of it. Before we even attempt to decode it we must first locate it.
+
+This is done by finding the outer border shown in the diagram above. The border is nicely sandwiched between black and white regions which together define a [contour](https://learnopencv.com/contour-detection-using-opencv-python-c/). OpenCV has a some fancy algorithms
+which can find these contours.
+
+We first threshold the image to convert to a black & white and then run OpenCV's `findContours`.
+
+We end up with something like this:
+
+
+Once we have a candidate contour, we apply [perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html). We need this in case the is seen under an angle. This makes as if we were looking directly at it.
 
 - image
 
-To do this I use OpenCV to find contours in the image. A contour is a closed shape which separates two regions. For this to work the image has to be converted to black & white:
+Now that we have a nice flat image, we check for the presence of the inner rings, again shown in the diagram above. This is just to make sure that we don't treat any random contour as a QR code. A lot of everyday objects can give false positives here. However, if we find the rings, it's likely we actually a real QR code.
 
-- image
 
-Once we have found a candidate we get rid of any possible distorition:
-
-- image
-
-Now we verify that we actually have a QR code on our hands by trying to locate the inner rings:
-
-- image
-
-Once we have those, we find the start corner. The start corner tells where to start reading the data:
+Having this, we locate the start corner. The start corner tells where to start reading the data:
 
 - image
 
@@ -73,34 +76,31 @@ Finally, we read the data. A black square encodes the bit 1 and white encodes 0.
 
 - image
 
-- First, we convert the image into a binary black & white image using Otsu's method
-- Next, we use OpenCV's function to find candidate contours which are processed to select likely candidates.
-- Each contour is mapped using a homography to remove any distortions
-- To make sure we actually have a qr code on our hands, we check for the presents of the circles at the center. There are a lot of rectangular objects in the wild, so this helps firlter out unlikely candidates.
-- Next, we look for the starting corner so that we know where to start reading from.
-- Finally we just read the cells in the data area. This data duplicated 3 times so we use majority voting to correct any errors.
 
 ## Design
 
-I tried to keep the design as simple as possible.
-
 ### Encoding
 
-The SR Code can encode up to 16 characters from this character set: ...
-The size of the set is 64 which is 2^6 which means that we can encode every character as a sequence of 6 bits. The total number of bits we can fit is 16 _ 6 _ 3=288
+The SR code can encode up to 16 characters from a slightly modified base64 character set: ` !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`. The difference is that instead of '+/' we have `space` and `!` which I think are a bit more useful for encoding text messages.
 
-This encoding scheme is pretty inefficient and it's possible to use more advanced encoding algorithms which would let you fit longer messages.
+Since the character set size is 64, any character can be encoded with 6 bits (since 2^6=64). To offer some error correction capabilities the message is duplicated 3 times. When decoding a majority vote is used which will give results as long as at least two copies are correct. Since we have 288 total available data squares, this gives us a maximum message length of 16, seeing that 288/(6*3) = 16.
 
-### Normalization
+This encoding scheme is pretty inefficient and it's in principle possible to use more sophisticated encoding algorithms which would let you fit longer messages.
 
-Once we have the start corner, we rotate the qr code so that the start corner is in the top left. Then, we just read the data column by column, skipping the middle part reserved for the circles.
+### Thresholding
 
-Why the rings? It's a pretty specific shape which is unlikely to appear randomly unless we're dealing with an actual qr code. It's also symmetrical so we can check for it regardless of the orientation the code.
-
-## Limitations
+To be able to find the contours, the image must be first converted to black & white.
+Using a static threshold is sensitive to lighting conditions. Instead, we use [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html) which selects the treshold dynamically using the image histogram.
 
 
+### Perspective correction
 
-- Maximum 16 characters from this character set:
+Since any random image of a QR code is unlikely to be perfectly facing the camera, before attempting to decode it, we must first undistort the image. To achieve this, we apply a homography estimated from the contour. This gives us the undistorted QR code.
 
-This is the result of the encoding scheme/ I had 288 bits to work with which leaves 288/3=96 bits for the message. Using base64, I can encode one character in 6 bits, thus 96/6=16 total characters.
+### Reading the data
+
+After the perspective correction, we check for presence of the inner rings.
+As I explained previously, this is to reject false positives. The reason for using the rings is that it is a pretty specific shape which is unlikely to appear randomly. It is also symmetrical so we can check for it regardless of the orientation the code.
+
+Once we have found the start corner, we rotate the code so that the start corner is in the top left. Then, we simply read and decode the data from top to bottom and column by column.
+
