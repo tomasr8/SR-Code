@@ -34,7 +34,7 @@ def decode(image):
     return result
 
 
-def decode_video(filename, visualization, verbose, stop_on_success):
+def decode_video(filename, visualize, verbose, stop_on_success):
     with video_capture(filename) as cap:
         cv2.namedWindow('SR code', cv2.WINDOW_KEEPRATIO)
         while cap.isOpened():
@@ -51,7 +51,7 @@ def decode_video(filename, visualization, verbose, stop_on_success):
             if verbose:
                 click.echo(result)
 
-            if not visualization:
+            if not visualize:
                 continue
 
             if result.message:

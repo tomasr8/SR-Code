@@ -28,14 +28,14 @@ def generate(size, message, output_file):
 
 
 @cli.command(name="decode")
-@click.option("--visualization/--no-visualization", default=True, help="Show/hide OpenCV visualization.")
+@click.option("--visualize/--no-visualize", default=True, help="Show/hide OpenCV visualization.")
 @click.argument("input_file", type=click.File())
-def decode(input_file, visualization):
+def decode(input_file, visualize):
     image = cv2.imread(input_file.name)
     result = _decode(image)
     click.echo(result)
 
-    if not visualization:
+    if not visualize:
         return
 
     cv2.namedWindow('SR code', cv2.WINDOW_KEEPRATIO)
@@ -52,11 +52,11 @@ def decode(input_file, visualization):
 
 
 @cli.command(name="video")
-@click.option("--visualization/--no-visualization", default=True, help="Show/hide OpenCV visualization.")
+@click.option("--visualize/--no-visualize", default=True, help="Show/hide OpenCV visualization.")
 @click.option("--verbose/--no-verbose", default=True, help="Print decode result for every frame.")
 @click.option("--stop-on-success/--no-stop-on-success", default=False, help="Stop on a successful read.")
 @click.argument("input_file", type=click.File(), required=False)
-def video(input_file, visualization, verbose, stop_on_success):
+def video(input_file, visualize, verbose, stop_on_success):
     # '0' signals OpenCV to open a camera stream
     filename = input_file.name if input_file else 0
-    decode_video(filename, visualization, verbose, stop_on_success)
+    decode_video(filename, visualize, verbose, stop_on_success)
