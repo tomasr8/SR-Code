@@ -2,11 +2,16 @@
   <img src="logo.svg">
 </p>
 
-# A (much) simplified QR code
+# A simplified QR code
 
 ## But why?
 
-I was taking a course about computer vision when I got the idea to design my own simplified QR code. I didn't want to create yet another QR code reader but rather create something of my own. SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (atleast that's what wikipedia tells me). Also a disclaimer, I haven't really looked deep into how a standard QR code works. This project is trying to only visually imitate a QR code, not neccessarily use the same algorithms.
+I wanted to do a project related to computer vision but I didn't want to create yet-another-QR-code-reader™️ but rather create something of my own.
+This project is not trying to be a serious contender to a QR code. It is just a hobby project that I work on in my free time. I tried to keep the code simple and clear so that
+even people with little experience in computer vision can experiment with it easily.
+
+
+SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (atleast that's what wikipedia tells me).
 
 ## Examples
 
@@ -104,3 +109,17 @@ As I explained previously, this is to reject false positives. The reason for usi
 
 Once we have found the start corner, we rotate the code so that the start corner is in the top left. Then, we simply read and decode the data from top to bottom and column by column.
 
+
+## Misc
+
+### Tab completion
+
+Click includes autocomplete capability, just run this command in your shell:
+```bash
+eval "$(_SR_COMPLETE=zsh_source sr)"
+```
+
+for zsh (you might need to run `rehash` as well), or for bash:
+```bash
+eval "$(_SR_COMPLETE=bash_source sr)"
+```
