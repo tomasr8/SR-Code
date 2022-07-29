@@ -10,7 +10,7 @@ build==0.8.0
     # via pip-tools
 click==8.1.3
     # via
-    #   -c requirements.txt
+    #   -r requirements.in
     #   pip-tools
 flake8==4.0.1
     # via -r requirements.dev.in
@@ -20,6 +20,12 @@ isort==5.10.1
     # via -r requirements.dev.in
 mccabe==0.6.1
     # via flake8
+numpy==1.23.1
+    # via
+    #   -r requirements.in
+    #   opencv-python
+opencv-python==4.6.0.66
+    # via -r requirements.in
 packaging==21.3
     # via
     #   build
