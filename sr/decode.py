@@ -4,33 +4,32 @@ import click
 import cv2
 import numpy as np
 
-from sr.code import DecodeError, DecodeResult, SRCodeReader, video_capture
+from sr.code import ContourResult, DecodeError, DecodeResult, SRCodeReader, video_capture
 from sr.image import (draw_contours, find_contours, horizontal_concat,
                       make_black_and_white, pressed_quit)
 
 
-def decode(image):
+def decode(image, find_all):
     start_time = time.time()
-    bw = make_black_and_white(image)
 
+    bw = make_black_and_white(image)
     contours = find_contours(bw)
-    result = DecodeResult(contour_count=len(contours),
-                          contour_visualization=cv2.cvtColor(bw, cv2.COLOR_GRAY2RGB))
-    draw_contours(result.contour_visualization, [c.points for c in contours])
+    result = DecodeResult(contour_visualization=cv2.cvtColor(bw, cv2.COLOR_GRAY2RGB))
+    draw_contours(result.contour_visualization, contours)
 
     for contour in contours:
         sr = SRCodeReader(size=np.sqrt(contour.area), image=bw)
 
         try:
-            result.message = sr.decode(contour)
-            # raise DecodeError("Test error pelase ignore")
+            message = sr.decode(contour)
         except DecodeError as e:
-            result.errors.append(str(e))
+            result.contours.append(ContourResult(error=str(e)))
         else:
-            result.decode_visualization = cv2.cvtColor(sr.image, cv2.COLOR_GRAY2RGB)
-            sr.visualize_decoded(result.decode_visualization)
+            visualization = cv2.cvtColor(sr.image, cv2.COLOR_GRAY2RGB)
+            sr.visualize_decoded(visualization)
+            result.contours.append(ContourResult(message=message, visualization=visualization))
 
-    result.time = time.time() - start_time
+    result.time_ms = (time.time() - start_time) * 1000
     return result
 
 
@@ -44,7 +43,7 @@ def decode_video(filename, visualize, verbose, stop_on_success):
 
             result = decode(frame)
 
-            if result.message and stop_on_success:
+            if result.success and stop_on_success:
                 click.echo(result)
                 break
 

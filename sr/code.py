@@ -8,8 +8,8 @@ import click
 import cv2
 import numpy as np
 
-from sr.image import (BLACK, GREEN, ORANGE, WHITE, create_circular_mask,
-                      draw_text, is_black, is_white, warp_image)
+from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE, create_circular_mask,
+                      is_black, is_white, warp_image)
 from sr.message import (CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE,
                         decode_data, encode_message)
 
@@ -24,7 +24,6 @@ class Corner(Enum):
 @contextmanager
 def video_capture(file=0):
     cap = cv2.VideoCapture(file)
-
     if not cap.isOpened():
         raise Exception(f"Failed to open file: {file}")
 
@@ -43,37 +42,48 @@ class DecodeError(Exception):
 
 
 @dataclass
-class DecodeResult:
-    message: str = None
-    time: float = 0
-    contour_count: int = 0
-    contour_visualization: np.ndarray = None
-    decode_visualization: np.ndarray = None
-    errors: List[str] = field(default_factory=list)
+class ContourResult:
+    message: str = ''
+    error: str = ''
+    visualization: np.ndarray = None
 
-    def __repr__(self):
-        time_ms = 100 * self.time
-        time = click.style(f"{time_ms:.1f}ms", fg='yellow')
-        contours = click.style(self.contour_count, fg='yellow')
-        if self.message:
-            result = click.style('Success', fg='green')
-            message = click.style(self.message, fg='yellow')
-            return (
-                f"Decode result: {result}\n" +
-                f"- Total time: {time}\n" +
-                f"- Contours found: {contours}\n" +
-                f"- Message: {message}"
-            )
+    @property
+    def success(self):
+        return bool(self.message)
+
+    def __str__(self):
+        if self.success:
+            return f"Message: {click.style(self.message, fg='green')}"
         else:
-            result = click.style('Failure', fg='red')
-            errors = [click.style(error, fg='red') for error in self.errors]
-            errors = '\n'.join([f'    {i+1}: {error}' for i, error in enumerate(errors)])
-            return (
-                f"Decode result: {result}\n" +
-                f"- Total time: {time}\n" +
-                f"- Contours found: {contours}\n" +
-                f"{errors}"
-            )
+            return f"Error: {click.style(self.error, fg='red')}"
+
+
+@dataclass
+class DecodeResult:
+    time_ms: float = 0
+    contour_visualization: np.ndarray = None
+    contours: List[ContourResult] = field(default_factory=list)
+
+    def __str__(self):
+        result = click.style('Success', fg='green') if self.success else click.style('Failure', fg='red')
+        time = click.style(f"{self.time_ms:.1f}ms", fg='yellow')
+        contour_count = click.style(len(self.contours), fg='yellow')
+        contours = [str(contour) for contour in self.contours]
+        contours = '\n'.join([f'    {i+1}: {contour}' for i, contour in enumerate(contours)])
+
+        return (
+            f"Decode result: {result}\n" +
+            f"- Total time: {time}\n" +
+            f"- Contours found: {contour_count}\n" +
+            contours
+        )
+
+    @property
+    def success(self):
+        return any(contour.success for contour in self.contours)
+
+    def get_visualizations(self):
+        return [contour.visualization for contour in self.contours if contour.visualization is not None]
 
 
 class SRCode:
@@ -290,10 +300,8 @@ class SRCodeReader(SRCode):
 
     def _visualize_data_points(self, image):
         for color, (y, x) in zip(self._read_colors(), self.data_squares()):
-            pos = self.px([x + 0.5, y + 0.5])
-            cv2.circle(image, pos, 7, GREEN, -1)
-            text = str(0 if color == WHITE else 1)
-            draw_text(image, text, self.px([x, y + 1]))
+            cv2.rectangle(image, self.px((x+0.4, y+0.4)), self.px((x+0.6, y+0.6)),
+                          PURPLE if color == WHITE else GREEN, -1)
 
     def _read_colors(self):
         return [
@@ -308,9 +316,11 @@ class SRCodeReader(SRCode):
         return decode_data(raw_data)
 
     def visualize_decoded(self, image):
-        self._visualize_outer_border(image)
-        self._visualize_inner_rings(image)
-        self._visualize_start_corner(image)
+        # Adjust the line thickness for the image resolution
+        line_thickness = self.pixels_per_square // 10
+        self._visualize_outer_border(image, thickness=line_thickness)
+        self._visualize_inner_rings(image, thickness=line_thickness)
+        self._visualize_start_corner(image, thickness=line_thickness)
         self._visualize_data_points(image)
 
     def decode(self, contour):

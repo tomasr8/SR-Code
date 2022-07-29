@@ -12,7 +12,7 @@ PURPLE = (155, 0, 255)
 Contour = namedtuple("Contour", ["points", "area"])
 
 
-def find_contours(image, min_area=1e5, epsilon=0.05):
+def find_contours(image, min_area=1e4, epsilon=0.05):
     contours, _ = cv2.findContours(image.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = [simplify_contour(c, epsilon) for c in contours]
     contours = [c for c in contours if (
@@ -74,7 +74,7 @@ def resize_with_aspect_ratio(image, width):
     return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
 
-def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=2):
+def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=3):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(
         image,
@@ -87,9 +87,11 @@ def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=2):
     )
 
 
-def draw_contours(image, contours, color=ORANGE, thickness=15):
+def draw_contours(image, contours, color=ORANGE):
+    # Heuristically tested to give a reasonable line thickness for varying image resolutions
+    thickness = round(np.sqrt(image.shape[0] * image.shape[1]) / 300)
     for contour in contours:
-        cv2.polylines(image, [contour], True, color, thickness)
+        cv2.polylines(image, [contour.points], True, color, thickness)
 
 
 def horizontal_concat(left, right):

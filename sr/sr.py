@@ -29,20 +29,21 @@ def generate(size, message, output_file):
 
 @cli.command(name="decode")
 @click.option("--visualize/--no-visualize", default=True, help="Show/hide OpenCV visualization.")
+@click.option("--find-all/--no-find-all", default=True, help="Find all SR codes.")
 @click.argument("input_file", type=click.File())
-def decode(input_file, visualize):
+def decode(input_file, visualize, find_all):
     image = cv2.imread(input_file.name)
-    result = _decode(image)
+    result = _decode(image, find_all)
     click.echo(result)
 
     if not visualize:
         return
 
     cv2.namedWindow('SR code', cv2.WINDOW_KEEPRATIO)
-    if result.message:
-        visualization = horizontal_concat(result.contour_visualization, result.decode_visualization)
-    else:
-        visualization = result.contour_visualization
+    visualization = result.contour_visualization
+    if result.success:
+        for vis in result.get_visualizations():
+            visualization = horizontal_concat(visualization, vis)
 
     cv2.imshow('SR code', visualization)
     while not pressed_quit():
