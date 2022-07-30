@@ -1,3 +1,4 @@
+import math
 from collections import namedtuple
 
 import cv2
@@ -89,7 +90,7 @@ def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=3):
 
 def draw_contours(image, contours, color=ORANGE):
     # Heuristically tested to give a reasonable line thickness for varying image resolutions
-    thickness = round(np.sqrt(image.shape[0] * image.shape[1]) / 300)
+    thickness = math.ceil(np.sqrt(image.shape[0] * image.shape[1]) / 300)
     for contour in contours:
         cv2.polylines(image, [contour.points], True, color, thickness)
 
@@ -103,5 +104,10 @@ def horizontal_concat(left, right):
     return image
 
 
+def get_pressed_key(timeout_ms):
+    key = cv2.waitKey(timeout_ms)
+    return None if key == -1 else chr(key & 0xFF)
+
+
 def pressed_quit(timeout_ms=0):
-    return cv2.waitKey(timeout_ms) & 0xFF == ord('q')
+    return get_pressed_key(timeout_ms) == 'q'

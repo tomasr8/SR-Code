@@ -1,3 +1,4 @@
+import math
 from collections.abc import Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -8,8 +9,9 @@ import click
 import cv2
 import numpy as np
 
-from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE, create_circular_mask,
-                      is_black, is_white, warp_image)
+from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE,
+                      create_circular_mask, is_black, is_white,
+                      make_black_and_white, warp_image)
 from sr.message import (CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE,
                         decode_data, encode_message)
 
@@ -95,7 +97,7 @@ class SRCode:
     This class also makes it possible to directly index individual squares.
     For example instead of doing:
         image[i*px:(i+1)*px, j*px:(j+1)*px]
-    you can instead do:
+    you can do:
         image[i, j]
 
     Slices are also supported:
@@ -241,9 +243,11 @@ class SRCodeReader(SRCode):
                                         [inner_size, 0]])
 
         self.image = warp_image(self.image, contour.points, pixel_coordinates, inner_size)
-        image_with_border = np.zeros((size, size), dtype=np.uint8)
-        image_with_border[px:(size - px), px:(size - px)] = self.image
-        self.image = image_with_border
+        image_with_border = np.zeros((size, size, 3), dtype=np.uint8)
+        image_with_border[px:(size - px), px:(size - px), :] = self.image
+        # Convert to black and white only now when the rest of the image has been removed
+        # This should improve the threshold estimation
+        self.image = make_black_and_white(image_with_border)
 
     def _verify_inner_rings(self):
         large_ring_mask = create_circular_mask(
@@ -317,7 +321,7 @@ class SRCodeReader(SRCode):
 
     def visualize_decoded(self, image):
         # Adjust the line thickness for the image resolution
-        line_thickness = self.pixels_per_square // 10
+        line_thickness = math.ceil(self.pixels_per_square / 10)
         self._visualize_outer_border(image, thickness=line_thickness)
         self._visualize_inner_rings(image, thickness=line_thickness)
         self._visualize_start_corner(image, thickness=line_thickness)
