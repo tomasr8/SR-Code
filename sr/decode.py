@@ -4,13 +4,11 @@ import click
 import cv2
 import numpy as np
 
-from sr.code import (ContourResult, DecodeError, DecodeResult, SRCodeReader,
-                     video_capture)
-from sr.image import (draw_contours, find_contours, get_pressed_key,
-                      horizontal_concat, make_black_and_white)
+from sr.code import ContourResult, DecodeError, DecodeResult, SRCodeReader, video_capture
+from sr.image import draw_contours, find_contours, get_pressed_key, horizontal_concat, make_black_and_white
 
 
-def decode(image, find_all, use_bw):
+def decode(image, find_all=True, use_bw=False):
     start_time = time.time()
 
     bw = make_black_and_white(image)
@@ -37,7 +35,7 @@ def decode(image, find_all, use_bw):
     return result
 
 
-def decode_video(filename, visualize, verbose, stop_on_success):
+def decode_video(filename, visualize=True, verbose=True, stop_on_success=True):
     with video_capture(filename) as cap:
         cv2.namedWindow('SR code', cv2.WINDOW_KEEPRATIO)
         use_bw = False
@@ -64,10 +62,10 @@ def decode_video(filename, visualize, verbose, stop_on_success):
             if not visualize:
                 continue
 
+            visualization = result.contour_visualization
             if result.success:
-                visualization = horizontal_concat(result.contour_visualization, result.decode_visualization)
-            else:
-                visualization = result.contour_visualization
+                for vis in result.get_visualizations():
+                    visualization = horizontal_concat(visualization, vis)
             cv2.imshow('SR code', visualization)
 
         cv2.destroyAllWindows()

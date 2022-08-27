@@ -4,6 +4,7 @@ from collections import namedtuple
 import cv2
 import numpy as np
 
+
 WHITE = 255
 BLACK = 0
 ORANGE = (0, 140, 240)

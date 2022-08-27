@@ -110,6 +110,18 @@ As I explained previously, this is to reject false positives. The reason for usi
 Once we have found the start corner, we rotate the code so that the start corner is in the top left. Then, we simply read and decode the data from top to bottom and column by column.
 
 
+## As a library
+
+You can import the relevant functions:
+
+```python
+from sr import generate, decode, decode_video, EncodeError
+
+image = generate(size=400, "Test image")
+
+
+```
+
 ## Misc
 
 ### Tab completion

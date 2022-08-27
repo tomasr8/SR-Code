@@ -1,7 +1,8 @@
 import click
 import cv2
 
-from sr.code import EncodeError, SRCodeGenerator
+from sr.code import EncodeError
+from sr.code import generate as _generate
 from sr.decode import decode as _decode
 from sr.decode import decode_video
 from sr.image import horizontal_concat, pressed_quit
@@ -18,10 +19,8 @@ def cli():
 @click.argument("output_file")
 def generate(size, message, output_file):
     """Generate an SR code."""
-    sr = SRCodeGenerator(size=size)
-
     try:
-        image = sr.generate(message)
+        image = _generate(size, message)
     except EncodeError as e:
         click.secho(e, fg='red')
     else:

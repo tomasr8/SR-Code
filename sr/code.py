@@ -9,11 +9,9 @@ import click
 import cv2
 import numpy as np
 
-from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE,
-                      create_circular_mask, is_black, is_white,
+from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE, create_circular_mask, is_black, is_white,
                       make_black_and_white, warp_image)
-from sr.message import (CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE,
-                        decode_data, encode_message)
+from sr.message import CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE, decode_data, encode_message
 
 
 class Corner(Enum):
@@ -332,3 +330,8 @@ class SRCodeReader(SRCode):
         self._verify_inner_rings()
         self._normalize_orientation()
         return self._read_data()
+
+
+def generate(size, message):
+    sr = SRCodeGenerator(size=size)
+    return sr.generate(message)

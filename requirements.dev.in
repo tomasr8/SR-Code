@@ -4,3 +4,4 @@ isort
 pip-tools
 pytest
 pytest-snapshot
+pre-commit
