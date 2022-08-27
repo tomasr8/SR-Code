@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg">
+  <img src="https://raw.githubusercontent.com/tomasr8/SR-Code/main/assets/logo.svg">
 </p>
 
 # A simplified QR code
@@ -52,7 +52,7 @@ sr --help
 ## How does it actually work?
 if you wanna see a detailed explanation, skip to [Design](#design).
 
-![](sr-diagram.png)
+![](https://raw.githubusercontent.com/tomasr8/SR-Code/main/assets/sr-diagram.png)
 
 This is a diagram showing all the main parts of the SR code. We'll explain them in the following section. (By the way, even with the extra colored lines, this will still decode correctly. Try running `sr decode sr-diagram.png` to see for yourself)
 
