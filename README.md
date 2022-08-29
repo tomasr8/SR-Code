@@ -4,9 +4,21 @@
 
 ## A simplified `QR code`-like reader and generator
 
+![video link](https://user-images.githubusercontent.com/8739637/187078067-aa96e466-5128-425e-a79f-314e1e551f02.mp4)
+
 https://user-images.githubusercontent.com/8739637/187078067-aa96e466-5128-425e-a79f-314e1e551f02.mp4
 
 ### To see more examples, [scroll to the end](#examples)
+
+## Table of contents
+
+- [What is this?](#what-is-this)
+- [How do I use this?](#how-do-i-use-this)
+- [Limitations](#limitations)
+- [How does it work?](#how-does-it-work)
+- [Examples](#examples)
+- [Further reading](#further-reading)
+- [Misc](#misc)
 
 ## What is this?
 This project is not trying to be a serious contender to a QR code. It is just a hobby project that I work on in my free time that I wanted to make available for others. I tried to keep the code simple and clear so that people not well versed in computer vision (me included) can experiment with it and learn from.
@@ -108,7 +120,7 @@ For every candidate contour, we also apply a [perspective correction](https://do
   <img src="assets/perspective.png" width="400">
 </p>
 
-Now that we have a nice flat image, we check if in the middle of the contour there are the inner rings shown in the diagram above. This is just to make sure that we don't treat any random contour as a valid SR code since a lot of everyday objects can give false positives here. On the other hand, if we do find the rings, it's likely that we actually have a legit SR code.
+Now that we have a nice flat image, we check if in the middle of the contour there are the inner rings shown in the diagram above. This is just to make sure that we don't treat any random contour as a valid SR code since a lot of everyday objects can give us a false positive. On the other hand, if we do find the rings, it's likely that we actually have a legit SR code.
 
 Now we just need to locate the start corner. The start corner basically tells us where to start reading the data:
 
@@ -116,8 +128,7 @@ Now we just need to locate the start corner. The start corner basically tells us
   <img src="assets/rings_corner.png" width="400">
 </p>
 
-
-As the last step, we read the data. The data is laid out in columns going from top to bottom and left to right, finishing in the bottom right corner. A black square encodes the `1` bit and white encodes the `0` bit. This bit sequence is then converted to individual characters.
+The data is laid out in columns going from top to bottom and left to right, finishing in the bottom right corner. A black square encodes the `1` bit and white encodes the `0` bit. This bit sequence is then converted to individual characters.
 
 <p align="center">
   <img src="assets/decode.png" width="400">
@@ -125,28 +136,57 @@ As the last step, we read the data. The data is laid out in columns going from t
 
 ## Detailed description
 
+This section expands a bit more on the parts I glossed over in the quick summary.
+
 ### Encoding
 
 The SR code can encode up to 16 characters from a slightly modified base64 character set: ` !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`. The difference is that instead of '+/' we have `space` and `!` which I think are a bit more useful for encoding text messages.
 
-Since the character set size is 64, any character can be encoded with 6 bits (since `2^6=64`). To offer some error correction capabilities, the message is duplicated 3 times. When decoding, a majority vote is used which gives correct results as long as at least two copies of each bit of the message are correct. Since we have 288 total available data squares in the image, this gives us a maximum message length of 16, seeing that `288/(6*3) = 16`.
+I chose a 64-character set intentionally because any character from the set can be encoded with just 6 bits (since `2^6 = 64`). There are 288 _data squares_ in total in the SR code which gives us `288/6 = 48` characters we can encode. However, in order to have some built-in error correction, the message is duplicated 3 times. When decoding, a majority vote is used to determine the correct bit. This gives correct results as long as at least two copies of each bit of the message are correct. Using this error correction, we get `48/3 == 16` as the maximum message length.
 
-This encoding scheme is pretty inefficient and it is possible to use more sophisticated error correction algorithms perhaps combined with some compression which would allow for longer messages to fit.
+This encoding scheme is pretty inefficient and it is definitely possible to use something more sophisticated which would allow for longer messages to fit.
 
 ### Thresholding
 
-The OpenCV contour-finding algorithm only work with black&white. Using a static threshold to create a black&white image is very sensitive to lighting conditions in which the image was taken. Instead, we use [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html) which selects the treshold dynamically using the image histogram. This gives a more robust output and it's one parameter less to tune.
+The OpenCV contour-finding algorithm only works with binary black & white images. Converting a color image into black & white is a surprisingly difficult problem. Using a static threshold for the grayscale image is pretty sensitive to lighting conditions in which the image was taken and a one-size-fits-all threshold value does not work very well. Instead, we use [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html) which selects the treshold adaptively using the image histogram. This gives a more robust output and it is also one parameter less to tune.
 
 ### Perspective correction
 
-Since any random image of an SR code is unlikely to be perfectly facing the camera. This is a problem for decoding because the individual squares won't line up along the image x and y axes. Before attempting to decode it, we must first undistort the image. To achieve this, we apply a homography estimated from the contour. This gives us the undistorted QR code.
+It is pretty unlikely that an image of an SR code is facing the camera without any rotation or distortion. This is a problem for decoding because the SR code grid won't line up along the image x and y axes. Before we can do the decoding, we must first undistort the image. To achieve this, we transform the image using a homography matrix estimated from the contour. The contour gives us 4 points - the corners of the contour. We choose other 4 arbitrary points which form a square (e.g. `(0, 0), (0, x), (x, x), (x, 0)` for some value of x) and compute a homography mapping between them. When we apply this homography to the original image, the SR code will become perfectly flat.
 
 ### Reading the data
 
 After the perspective correction, we check for presence of the inner rings.
-As I explained previously, this is to reject false positives. The reason for using the rings is that it is a pretty specific shape which is unlikely to appear randomly. It is also symmetrical so we can check for it regardless of the orientation the code.
+The rings only serve one purpose - to reject false positives. The reason for using the rings is that it is a pretty specific shape which is unlikely to appear randomly - a white ring inside a black ring both with a given radius. The rings are also symmetrical so we can check for it regardless of the orientation.
 
-Once we have found the start corner, we rotate the code so that the start corner is in the top left. Then, we simply read and decode the data from top to bottom and column by column.
+The start corner is also fairly simple to find. There are only four possible positions where it can be. Once we have found the start corner, we rotate the image so that the start corner is in the top left position. The final step is to read and decode the data going down each column and moving from left to right.
+
+## Examples
+
+Check the [examples](examples/) folder for more.
+You can try these yourself - just clone the repo and run e.g. `sr decode examples/lena.png`.
+
+- Standard Hello world example
+
+![](assets/decoded/hello.png)
+- Error correction can handle [Lena](https://en.wikipedia.org/wiki/Lenna)
+
+![](assets/decoded/lena.png)
+- Thresholding can even handle other (sufficiently dark) colors
+
+![](assets/decoded/colors.png)
+- Codeception, why yes
+
+![](assets/decoded/codeception.png)
+- And now everything combined together
+
+![](assets/decoded/all.png)
+
+## Further reading
+
+- [Image contours](https://learnopencv.com/contour-detection-using-opencv-python-c/)
+- [Perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html)
+- [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html)
 
 ## Misc
 
@@ -163,30 +203,3 @@ Or in `zsh` (you might need to run `rehash` first)
 ```bash
 eval "$(_SR_COMPLETE=zsh_source sr)"
 ```
-
-### Further reading
-
-- [Image contours](https://learnopencv.com/contour-detection-using-opencv-python-c/)
-- [Perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html)
-- [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html)
-
-### Examples
-
-Check the [examples](examples/) folder for more.
-You can try these yourself - just clone the repo and run e.g. `sr decode examples/lena.png`.
-
-- Standard Hello world example
-
-![](assets/decoded/hello.png)
-- Error correction can handle Lena
-
-![](assets/decoded/lena.png)
-- Thresholding can even handle other (sufficiently dark) colors
-
-![](assets/decoded/colors.png)
-- Codeception, why yes
-
-![](assets/decoded/codeception.png)
-- And now everything combined together
-
-![](assets/decoded/all.png)
