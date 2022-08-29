@@ -1,7 +1,7 @@
 [project]
 name = "srcode"
 dynamic = ["version"]
-description = "A simplified QR code reader & generator for educational purposes"
+description = "A simplified 'QR code'-like reader and generator"
 readme = "README.md"
 authors = [{ name = "Tomas R." }]
 classifiers = [
