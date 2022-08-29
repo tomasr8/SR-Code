@@ -21,7 +21,7 @@ https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-b
 ## What is this?
 This project is not trying to be a serious contender to a QR code. It is just a hobby project that I work on in my free time that I wanted to make available for others. I tried to keep the code simple and clear so that people not well versed in computer vision (me included) can experiment with it and learn from.
 
-SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (atleast that's what wikipedia tells me).
+SR is a tongue-in-cheek acronym for `Sufficient Response`, since QR stands for `Quick Response` (at least that's what Wikipedia tells me).
 
 ## How do I use this?
 
@@ -45,7 +45,7 @@ sr video video.mp4
 sr video
 ```
 
-Check the help message of the individual commands e.g. `sr generate --help` for more info.
+Check the help message of the individual commands, e.g. `sr generate --help` for more info.
 
 ### As a library
 
@@ -83,11 +83,10 @@ For more info, check how the CLI uses these functions in [sr/sr.py](sr/sr.py)
 
 ## Limitations
 
-Before I get into how it works, here are the limitations of the SR code. These are mostly due to me trying to keep the design simple
-while still having some built-in robustness.
+Before I get into how it works, here are the limitations of the SR code. These are mostly because I really wanted to keep the design simple while still having some built-in robustness.
 
 - Maximum message length of 16 characters - the SR code uses a simple error correction mechanism which takes space.
-- The characters must be from this set: ` !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`. This is basically base64 but I included space and `!`.
+- The characters must be from this set: ` !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`. This is basically base64, but I included space and `!`.
 - The SR code cannot handle mirrored images - This could be easily fixed, but at a cost of added complexity.
 
 
@@ -101,9 +100,9 @@ This image above shows all the main parts of the SR code. I'll refer back to thi
 
 ### Quick summary
 
-Let's assume we start with a standard RGB image that includes the SR code somewhere in it. Before we can try and decode it, we must first find it in the image.
+Let's assume we start with a standard RGB image that includes the SR code somewhere in it. Before we can try to decode it, we must first find it in the image.
 
-We find the SR code by looking for the outer border shown in the diagram above. The border is nicely sandwiched between black and white regions which together define a [contour](https://learnopencv.com/contour-detection-using-opencv-python-c/) - basically a closed shape separating two regions of an image. OpenCV has some fancy algorithms
+We find the SR code by looking for the outer border shown in the diagram above. The border is nicely sandwiched between black and white regions, which together define a [contour](https://learnopencv.com/contour-detection-using-opencv-python-c/) - basically a closed shape separating two parts of an image. OpenCV has some fancy algorithms
 which can find these contours. Running the contour finding algorithm, we end up with something like this:
 
 <p align="center">
@@ -112,13 +111,13 @@ which can find these contours. Running the contour finding algorithm, we end up 
 
 You can see there are multiple contours (shown in orange). There are many contours which are definitely not what we're looking for that we need to filter out.
 
-For every candidate contour, we also apply a [perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html). We need to do that in case the image is seen under an angle. This transforation makes as if we were looking directly at it:
+For every candidate contour, we also apply a [perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html). We need to do that in case the image is seen under an angle. This transformation makes as if we were looking directly at it:
 
 <p align="center">
   <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/perspective.png" width="400">
 </p>
 
-Now that we have a nice flat image, we check if in the middle of the contour there are the inner rings shown in the diagram above. This is just to make sure that we don't treat any random contour as a valid SR code since a lot of everyday objects can give us a false positive. On the other hand, if we do find the rings, it's likely that we actually have a legit SR code.
+Now that we have a nice flat image, we check if in the middle of the contour there are the inner rings shown in the diagram above. This is just to make sure that we don't treat any random contour as a valid SR code, since lots of everyday objects can give us a false positive. On the other hand, if we do find the rings, it's likely that we actually have a legit SR code.
 
 Now we just need to locate the start corner. The start corner basically tells us where to start reading the data:
 
@@ -126,7 +125,7 @@ Now we just need to locate the start corner. The start corner basically tells us
   <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/rings_corner.png" width="400">
 </p>
 
-The data is laid out in columns going from top to bottom and left to right, finishing in the bottom right corner. A black square encodes the `1` bit and white encodes the `0` bit. This bit sequence is then converted to individual characters.
+The data is laid out in columns going from top to bottom and left to right, finishing in the bottom right hand corner. A black square encodes the `1` bit and white encodes the `0` bit. This bit sequence is then converted to individual characters.
 
 <p align="center">
   <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decode.png" width="400">
@@ -140,13 +139,13 @@ This section expands a bit more on the parts I glossed over in the quick summary
 
 The SR code can encode up to 16 characters from a slightly modified base64 character set: ` !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`. The difference is that instead of '+/' we have `space` and `!` which I think are a bit more useful for encoding text messages.
 
-I chose a 64-character set intentionally because any character from the set can be encoded with just 6 bits (since `2^6 = 64`). There are 288 _data squares_ in total in the SR code which gives us `288/6 = 48` characters we can encode. However, in order to have some built-in error correction, the message is duplicated 3 times. When decoding, a majority vote is used to determine the correct bit. This gives correct results as long as at least two copies of each bit of the message are correct. Using this error correction, we get `48/3 == 16` as the maximum message length.
+I chose a 64-character set intentionally because any character from the set can be encoded with just 6 bits (since `2^6 = 64`). There are 288 _data squares_ in total in the SR code, which gives us `288/6 = 48` characters we can encode. However, to have some built-in error correction, the message is duplicated 3 times. Decoding uses a majority vote to determine the correct bit. This gives correct results as long as at least two copies of each bit of the message are correct. Using this error correction, we get `48/3 == 16` as the maximum message length.
 
-This encoding scheme is pretty inefficient and it is definitely possible to use something more sophisticated which would allow for longer messages to fit.
+This encoding scheme is pretty inefficient, and it is definitely possible to use something more sophisticated which would allow for longer messages to fit.
 
 ### Thresholding
 
-The OpenCV contour-finding algorithm only works with binary black & white images. Converting a color image into black & white is a surprisingly difficult problem. Using a static threshold for the grayscale image is pretty sensitive to lighting conditions in which the image was taken and a one-size-fits-all threshold value does not work very well. Instead, we use [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html) which selects the treshold adaptively using the image histogram. This gives a more robust output and it is also one parameter less to tune.
+The OpenCV contour-finding algorithm only works with binary black & white images. Converting a color image into black & white is a surprisingly difficult problem. Using a static threshold for the grayscale image is pretty sensitive to lighting conditions in which the image was taken. Instead, we use [Otsu's Binarization](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html) which selects the threshold adaptively using the image histogram. This gives a more robust output, and it is also one parameter less to tune.
 
 ### Perspective correction
 
@@ -155,7 +154,7 @@ It is pretty unlikely that an image of an SR code is facing the camera without a
 ### Reading the data
 
 After the perspective correction, we check for presence of the inner rings.
-The rings only serve one purpose - to reject false positives. The reason for using the rings is that it is a pretty specific shape which is unlikely to appear randomly - a white ring inside a black ring both with a given radius. The rings are also symmetrical so we can check for it regardless of the orientation.
+The rings only serve one purpose - to reject false positives. The reason for using the rings is that it is a pretty specific shape which is unlikely to appear randomly - a white ring inside a black ring, both with a given radius. The rings are also symmetrical, meaning we can check for it regardless of the image orientation.
 
 The start corner is also fairly simple to find. There are only four possible positions where it can be. Once we have found the start corner, we rotate the image so that the start corner is in the top left position. The final step is to read and decode the data going down each column and moving from left to right.
 
@@ -190,7 +189,7 @@ You can try these yourself - just clone the repo and run e.g. `sr decode example
 
 ### Tab completion
 
-Click includes autocomplete capability, just run this command in your `bash` shell:
+Click includes autocomplete capability, just run this command in your `bash` shell to enable it:
 
 ```bash
 eval "$(_SR_COMPLETE=bash_source sr)"
