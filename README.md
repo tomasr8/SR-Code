@@ -4,13 +4,7 @@
 
 ## A simplified `QR code`-like reader and generator
 
-Testing for PyPI
-
-![video link](https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4)
-<video src="https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4" />
-
 https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4
-
 
 ### To see more examples, [scroll to the end](#examples)
 
@@ -113,7 +107,7 @@ We find the SR code by looking for the outer border shown in the diagram above. 
 which can find these contours. Running the contour finding algorithm, we end up with something like this:
 
 <p align="center">
-  <img src="assets/contours.png" width="600">
+  <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/contours.png" width="600">
 </p>
 
 You can see there are multiple contours (shown in orange). There are many contours which are definitely not what we're looking for that we need to filter out.
@@ -121,7 +115,7 @@ You can see there are multiple contours (shown in orange). There are many contou
 For every candidate contour, we also apply a [perspective correction](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html). We need to do that in case the image is seen under an angle. This transforation makes as if we were looking directly at it:
 
 <p align="center">
-  <img src="assets/perspective.png" width="400">
+  <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/perspective.png" width="400">
 </p>
 
 Now that we have a nice flat image, we check if in the middle of the contour there are the inner rings shown in the diagram above. This is just to make sure that we don't treat any random contour as a valid SR code since a lot of everyday objects can give us a false positive. On the other hand, if we do find the rings, it's likely that we actually have a legit SR code.
@@ -129,13 +123,13 @@ Now that we have a nice flat image, we check if in the middle of the contour the
 Now we just need to locate the start corner. The start corner basically tells us where to start reading the data:
 
 <p align="center">
-  <img src="assets/rings_corner.png" width="400">
+  <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/rings_corner.png" width="400">
 </p>
 
 The data is laid out in columns going from top to bottom and left to right, finishing in the bottom right corner. A black square encodes the `1` bit and white encodes the `0` bit. This bit sequence is then converted to individual characters.
 
 <p align="center">
-  <img src="assets/decode.png" width="400">
+  <img src="https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decode.png" width="400">
 </p>
 
 ## Detailed description
@@ -172,19 +166,19 @@ You can try these yourself - just clone the repo and run e.g. `sr decode example
 
 - Standard Hello world example
 
-![](assets/decoded/hello.png)
+![](https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decoded/hello.png)
 - Error correction can handle [Lena](https://en.wikipedia.org/wiki/Lenna)
 
-![](assets/decoded/lena.png)
+![](https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decoded/lena.png)
 - Thresholding can even handle other (sufficiently dark) colors
 
-![](assets/decoded/colors.png)
+![](https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decoded/colors.png)
 - Codeception, why yes
 
-![](assets/decoded/codeception.png)
+![](https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decoded/codeception.png)
 - And now everything combined together
 
-![](assets/decoded/all.png)
+![](https://github.com/tomasr8/SR-Code/blob/126cc266296f758bc016962853ae3929680e7148/assets/decoded/all.png)
 
 ## Further reading
 
