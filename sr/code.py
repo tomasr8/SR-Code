@@ -9,16 +9,16 @@ import click
 import cv2
 import numpy as np
 
-from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE, create_circular_mask, is_black, is_white,
-                      make_black_and_white, warp_image)
+from sr.image import (BLACK, GREEN, ORANGE, PURPLE, WHITE, create_circular_mask, get_optimal_font_scale,
+                      get_optimal_thickness, is_black, is_white, make_black_and_white, vertical_concat, warp_image)
 from sr.message import CHARACTERS, DUPLICATION_FACTOR, LETTER_SIZE, decode_data, encode_message
 
 
 class Corner(Enum):
     TOP_LEFT = 1
-    TOP_RIGHT = 3
-    BOTTOM_RIGHT = 4
-    BOTTOM_LEFT = 2
+    TOP_RIGHT = 2
+    BOTTOM_RIGHT = 3
+    BOTTOM_LEFT = 4
 
 
 @contextmanager
@@ -60,6 +60,11 @@ class ContourResult:
 
 @dataclass
 class DecodeResult:
+    """Stores the decode result.
+
+    It contains a result for each found contour.
+    Each contour either has an error, or a message and a visualization.
+    """
     time_ms: float = 0
     contour_visualization: np.ndarray = None
     contours: List[ContourResult] = field(default_factory=list)
@@ -89,11 +94,11 @@ class DecodeResult:
 class SRCode:
     """Base SR code class.
 
-    Stores the dimensions of all the parts of the SR code and
-    some helper methods such as access to the squares holding data.
+    Stores the dimensions of all the parts of the SR code and has
+    some helper methods such to provide access to the data squares.
 
     This class also makes it possible to directly index individual squares.
-    For example instead of doing:
+    For example, instead of doing:
         image[i*px:(i+1)*px, j*px:(j+1)*px]
     you can do:
         image[i, j]
@@ -161,13 +166,13 @@ class SRCode:
             x >= (self.squares - self.reserved_outer_border) or
             y >= (self.squares - self.reserved_outer_border)
         )
-        inner_circle = (
+        inner_rings = (
             x >= (self.center - self.reserved_inner_radius) and
             x < (self.center + self.reserved_inner_radius) and
             y >= (self.center - self.reserved_inner_radius) and
             y < (self.center + self.reserved_inner_radius)
         )
-        return outer_border or inner_circle
+        return outer_border or inner_rings
 
     @property
     def corners(self):
@@ -233,6 +238,7 @@ class SRCodeGenerator(SRCode):
 class SRCodeReader(SRCode):
 
     def _isolate_sr_code(self, contour):
+        """Undistort the image & remove everything outside of the contour."""
         px = self.pixels_per_square
         size = self.px(self.squares)
         inner_size = self.px(self.squares - 2)
@@ -248,6 +254,7 @@ class SRCodeReader(SRCode):
         self.image = make_black_and_white(image_with_border)
 
     def _verify_inner_rings(self):
+        """Make sure the image contains the inner rings."""
         large_ring_mask = create_circular_mask(
             self.px(self.large_ring_radius), self.px(self.squares))
         small_ring_mask = create_circular_mask(
@@ -268,6 +275,7 @@ class SRCodeReader(SRCode):
                 return name
 
     def _normalize_orientation(self):
+        """Rotate the image so that the start corner is in the top left."""
         start_corner = self._find_start_corner()
         if start_corner is None:
             raise DecodeError("Failed to find the start corner")
@@ -305,6 +313,18 @@ class SRCodeReader(SRCode):
             cv2.rectangle(image, self.px((x+0.4, y+0.4)), self.px((x+0.6, y+0.6)),
                           PURPLE if color == WHITE else GREEN, -1)
 
+    def _visualize_message(self, image, message):
+        """Append a message to the bottom of the visualization."""
+        h, w = image.shape[:2]
+        text_height, text_width = round(0.1*h), round(0.9*w)
+        origin = (round(0.05*text_width), round(0.75*text_height))
+        font = cv2.FONT_HERSHEY_DUPLEX
+        thickness = get_optimal_thickness(text_width)
+        scale = get_optimal_font_scale(message, text_width, thickness=thickness)
+        text = np.zeros((text_height, w, 3), dtype=np.uint8)
+        text = cv2.putText(text, message, origin, font, scale, ORANGE, thickness, cv2.LINE_AA)
+        return vertical_concat(image, text)
+
     def _read_colors(self):
         return [
             WHITE if is_white(self[y, x], threshold=0.5) else BLACK
@@ -317,15 +337,21 @@ class SRCodeReader(SRCode):
         ]
         return decode_data(raw_data)
 
-    def visualize_decoded(self, image):
+    def visualize_decoded(self, image, message):
         # Adjust the line thickness for the image resolution
-        line_thickness = math.ceil(self.pixels_per_square / 10)
+        line_thickness = math.ceil(self.pixels_per_square / 5)
         self._visualize_outer_border(image, thickness=line_thickness)
         self._visualize_inner_rings(image, thickness=line_thickness)
         self._visualize_start_corner(image, thickness=line_thickness)
         self._visualize_data_points(image)
+        return self._visualize_message(image, message)
 
     def decode(self, contour):
+        """Decode data from region given by a contour.
+
+        Returns the message as a simple string or
+        raises `DecodeError` if decoding fails.
+        """
         self._isolate_sr_code(contour)
         self._verify_inner_rings()
         self._normalize_orientation()
@@ -333,5 +359,10 @@ class SRCodeReader(SRCode):
 
 
 def generate(size, message):
+    """Generate and SR code from a message.
+
+    Raises `EncodeError` if the message is too long or
+    uses invalid characters.
+    """
     sr = SRCodeGenerator(size=size)
     return sr.generate(message)

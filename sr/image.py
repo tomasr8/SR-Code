@@ -76,19 +76,6 @@ def resize_with_aspect_ratio(image, width):
     return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
 
-def draw_text(image, text, pos, color=PURPLE, font_size=1.0, thickness=3):
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(
-        image,
-        text,
-        pos,
-        font,
-        font_size,
-        color,
-        thickness,
-    )
-
-
 def draw_contours(image, contours, color=ORANGE):
     # Heuristically tested to give a reasonable line thickness for varying image resolutions
     thickness = math.ceil(np.sqrt(image.shape[0] * image.shape[1]) / 300)
@@ -97,12 +84,42 @@ def draw_contours(image, contours, color=ORANGE):
 
 
 def horizontal_concat(left, right):
+    """Concatenate images horizontally.
+
+    If the height of the images is not the same,
+    the resulting image is padded with black.
+    """
     h = max(left.shape[0], right.shape[0])
     w = left.shape[1] + right.shape[1]
     image = np.zeros((h, w, 3), dtype=np.uint8)
     image[:left.shape[0], :left.shape[1]] = left
     image[:right.shape[0], left.shape[1]:] = right
     return image
+
+
+def vertical_concat(top, bottom):
+    """Concatenate images vertically.
+
+    If the width of the images is not the same,
+    the resulting image is padded with black.
+    """
+    image = horizontal_concat(top.swapaxes(0, 1), bottom.swapaxes(0, 1))
+    return image.swapaxes(0, 1)
+
+
+def get_optimal_font_scale(text, width, thickness=6):
+    """Find a message font size which inside the visualization."""
+    for scale in reversed(range(60)):
+        size = cv2.getTextSize(text, fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=scale/10, thickness=thickness)
+        new_width = size[0][0]
+        if (new_width <= width):
+            return scale/10
+    return 1
+
+
+def get_optimal_thickness(width):
+    """Return a font thickness that doesn't look terrible."""
+    return max(1, min(width//200, 6))
 
 
 def get_pressed_key(timeout_ms):

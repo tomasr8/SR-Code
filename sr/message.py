@@ -1,7 +1,6 @@
 import numpy as np
 
 
-# Just so happens to be 64 (2^6) characters
 CHARACTERS = " !0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LETTER_SIZE = 6
 DUPLICATION_FACTOR = 3

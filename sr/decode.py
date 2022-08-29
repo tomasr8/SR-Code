@@ -9,6 +9,13 @@ from sr.image import draw_contours, find_contours, get_pressed_key, horizontal_c
 
 
 def decode(image, find_all=True, use_bw=False):
+    """Decode from an image.
+
+    :param image: The input numpy image
+    :param find_all: Whether to find all SR codes in the image
+    :param use_bw: Whether the visualization should be in black & white
+    :return: An instance of DecodeResult
+    """
     start_time = time.time()
 
     bw = make_black_and_white(image)
@@ -25,9 +32,8 @@ def decode(image, find_all=True, use_bw=False):
             result.contours.append(ContourResult(error=str(e)))
         else:
             visualization = cv2.cvtColor(sr.image, cv2.COLOR_GRAY2RGB)
-            sr.visualize_decoded(visualization)
+            visualization = sr.visualize_decoded(visualization, message)
             result.contours.append(ContourResult(message=message, visualization=visualization))
-
             if not find_all:
                 break
 
@@ -35,7 +41,16 @@ def decode(image, find_all=True, use_bw=False):
     return result
 
 
-def decode_video(filename, visualize=True, verbose=True, stop_on_success=True):
+def decode_video(filename, visualize=True, verbose=True, stop_on_success=False):
+    """Decode from a video stream.
+
+    Pass '0' for filename to open the default camera stream.
+
+    :param filename: The path to the video
+    :param visualize: Whether to open an OpenCV window with a visualization
+    :param verbose: Whether to print the result of every frame
+    :param stop_on_success: Stop when an SR code is found
+    """
     with video_capture(filename) as cap:
         cv2.namedWindow('SR code', cv2.WINDOW_KEEPRATIO)
         use_bw = False
