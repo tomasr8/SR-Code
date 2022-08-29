@@ -4,9 +4,13 @@
 
 ## A simplified `QR code`-like reader and generator
 
-![video link](https://user-images.githubusercontent.com/8739637/187078067-aa96e466-5128-425e-a79f-314e1e551f02.mp4)
+Testing for PyPI
 
-https://user-images.githubusercontent.com/8739637/187078067-aa96e466-5128-425e-a79f-314e1e551f02.mp4
+![video link](https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4)
+<video src="https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4" />
+
+https://user-images.githubusercontent.com/8739637/187269417-937e7158-4ab8-419c-bf29-afe341bfbd12.mp4
+
 
 ### To see more examples, [scroll to the end](#examples)
 
