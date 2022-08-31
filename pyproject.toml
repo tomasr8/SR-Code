@@ -2,7 +2,7 @@
 name = "srcode"
 dynamic = ["version"]
 description = "A simplified 'QR code'-like reader and generator"
-readme = "README.md"
+readme = "README.pypi.md"
 authors = [{ name = "Tomas R." }]
 classifiers = [
     "Development Status :: 4 - Beta",
